@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { mockJobs } from "@/data/mock";
 import { formatSalaryRange } from "@/lib/utils";
 import {
   Search,
@@ -29,18 +28,22 @@ export default function PublicJobsPage() {
   const [location, setLocation] = useState("All");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = mockJobs.filter((job) => {
-    const matchSearch =
-      !search ||
-      job.title.toLowerCase().includes(search.toLowerCase()) ||
-      job.company.toLowerCase().includes(search.toLowerCase()) ||
-      job.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()));
-    const matchCat = category === "All" || job.category === category;
-    const matchLoc = location === "All" || job.location.includes(location);
-    const matchRemote = !remoteOnly || job.isRemote;
-    return matchSearch && matchCat && matchLoc && matchRemote;
-  });
+  useEffect(() => {
+    const params = new URLSearchParams({ limit: "50" });
+    if (search) params.set("search", search);
+    if (location !== "All") params.set("location", location);
+    if (category !== "All") params.set("category", category);
+    if (remoteOnly) params.set("remote", "true");
+    setLoading(true);
+    fetch(`/api/jobs?${params}`)
+      .then((r) => r.json())
+      .then((d) => { setJobs(d.jobs ?? []); setLoading(false); });
+  }, [search, location, category, remoteOnly]);
+
+  const filtered = jobs;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -153,7 +156,11 @@ export default function PublicJobsPage() {
         </div>
 
         {/* Jobs Grid */}
-        {filtered.length > 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {[1,2,3,4,5,6].map(i => <div key={i} className="h-52 bg-white rounded-2xl border border-slate-100 animate-pulse" />)}
+          </div>
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((job) => (
               <div
@@ -165,13 +172,13 @@ export default function PublicJobsPage() {
                   <div className="flex items-center gap-3">
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                      style={{ backgroundColor: (job as any).companyColor || (job as any).logoColor || "#4f46e5" }}
+                      style={{ backgroundColor: job.company?.logoColor ?? "#4f46e5" }}
                     >
-                      {(job as any).companyLogo || (job as any).logoText || job.company.slice(0, 2).toUpperCase()}
+                      {job.company?.logoText ?? job.company?.name?.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <h3 className="font-semibold text-slate-900 text-sm leading-tight">{job.title}</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">{job.company}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{job.company?.name}</p>
                     </div>
                   </div>
                   {job.isRemote && (
@@ -190,27 +197,21 @@ export default function PublicJobsPage() {
                   <span className="flex items-center gap-1 text-xs text-slate-500">
                     <Clock className="w-3 h-3" /> {job.type}
                   </span>
-                  {((job as any).salaryMin || (job as any).salary?.min) && (
+                  {job.salaryMin && (
                     <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
-                      <IndianRupee className="w-3 h-3" /> {formatSalaryRange(
-                        (job as any).salaryMin ?? (job as any).salary?.min,
-                        (job as any).salaryMax ?? (job as any).salary?.max
-                      )}
+                      <IndianRupee className="w-3 h-3" /> {formatSalaryRange(job.salaryMin, job.salaryMax)}
                     </span>
                   )}
                 </div>
 
                 {/* Skills */}
                 <div className="flex flex-wrap gap-1.5">
-                  {job.skills.slice(0, 4).map((skill) => (
-                    <span
-                      key={skill}
-                      className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-medium"
-                    >
-                      {skill}
+                  {(job.skills ?? []).slice(0, 4).map((s: any) => (
+                    <span key={s.id ?? s} className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-medium">
+                      {s.skill ?? s}
                     </span>
                   ))}
-                  {job.skills.length > 4 && (
+                  {(job.skills?.length ?? 0) > 4 && (
                     <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md">
                       +{job.skills.length - 4}
                     </span>
@@ -219,7 +220,7 @@ export default function PublicJobsPage() {
 
                 {/* Apply CTA */}
                 <div className="pt-1 border-t border-slate-50 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">{job.applicants} applicants</span>
+                  <span className="text-xs text-slate-400">{job._count?.applications ?? 0} applicants</span>
                   <Link href="/candidate/register">
                     <Button size="sm" variant="primary" className="flex items-center gap-1.5">
                       Apply Now <ArrowRight className="w-3.5 h-3.5" />

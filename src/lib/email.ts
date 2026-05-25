@@ -10,7 +10,7 @@ export async function sendOtpEmail(email: string, otp: string, type: "candidate"
 
   const label = type === "candidate" ? "candidate account" : "company account";
 
-  await resend.emails.send({
+  const { data, error } = await resend.emails.send({
     from,
     to: email,
     subject,
@@ -38,4 +38,11 @@ export async function sendOtpEmail(email: string, otp: string, type: "candidate"
       </div>
     `,
   });
+
+  if (error) {
+    console.error("Resend error:", error);
+    throw new Error(error.message);
+  }
+
+  return data;
 }

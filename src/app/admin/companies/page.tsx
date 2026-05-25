@@ -1,49 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
-import { Badge, StatusBadge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { mockCompanies } from "@/data/mock";
-import {
-  Search,
-  Eye,
-  CheckCircle,
-  Ban,
-  Building2,
-  MapPin,
-  Briefcase,
-  Download,
-  Filter,
-} from "lucide-react";
+import { Search, CheckCircle, Ban, Building2 } from "lucide-react";
 
 export default function AdminCompaniesPage() {
   const [search, setSearch] = useState("");
-  const [companies, setCompanies] = useState(mockCompanies);
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = companies.filter(
-    (c) =>
-      !search ||
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.industry.toLowerCase().includes(search.toLowerCase()) ||
-      c.location.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    fetch("/api/companies")
+      .then((r) => r.json())
+      .then((d) => { setCompanies(d.companies ?? []); setLoading(false); });
+  }, []);
+
+  const filtered = companies.filter((c) =>
+    !search ||
+    c.name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.industry?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleApprove = (id: string) => {
-    setCompanies((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: "approved", verified: true } : c))
-    );
-  };
-
-  const handleSuspend = (id: string) => {
-    setCompanies((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? { ...c, status: c.status === "suspended" ? "approved" : "suspended" }
-          : c
-      )
-    );
+  const updateStatus = async (companyId: string, status: string) => {
+    await fetch("/api/companies", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companyId, status }),
+    });
+    setCompanies((prev) => prev.map((c) => c.id === companyId ? { ...c, status } : c));
   };
 
   return (
@@ -52,121 +39,100 @@ export default function AdminCompaniesPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar variant="admin" candidateName="Admin" />
         <main className="flex-1 p-6 overflow-y-auto">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">Companies</h1>
-              <p className="text-sm text-slate-500 mt-0.5">
-                {companies.length} registered companies
-              </p>
-            </div>
-            <Button size="sm" variant="outline">
-              <Download className="w-3.5 h-3.5" /> Export
-            </Button>
+          <div className="mb-6">
+            <h1 className="text-xl font-bold text-slate-900">Companies</h1>
+            <p className="text-sm text-slate-500">{companies.length} registered companies</p>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            {[
-              { label: "Total", value: companies.length, color: "bg-blue-50 text-blue-700" },
-              { label: "Approved", value: companies.filter((c) => c.status === "approved").length, color: "bg-emerald-50 text-emerald-700" },
-              { label: "Pending", value: companies.filter((c) => c.status === "pending").length, color: "bg-amber-50 text-amber-700" },
-              { label: "Verified", value: companies.filter((c) => c.verified).length, color: "bg-indigo-50 text-indigo-700" },
-            ].map((s) => (
-              <div key={s.label} className={`rounded-xl p-4 ${s.color}`}>
-                <p className="text-2xl font-bold">{s.value}</p>
-                <p className="text-xs font-medium mt-0.5">{s.label}</p>
+          <div className="bg-white rounded-2xl border border-slate-100 card-shadow">
+            <div className="p-4 border-b border-slate-100">
+              <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
+                <Search className="w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search companies..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="flex-1 text-sm bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
+                />
               </div>
-            ))}
-          </div>
-
-          {/* Search */}
-          <div className="bg-white rounded-2xl border border-slate-100 card-shadow p-4 mb-4 flex gap-3">
-            <div className="flex items-center gap-2 flex-1 bg-slate-50 rounded-xl px-4 py-2.5">
-              <Search className="w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search companies..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 text-sm bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
-              />
             </div>
-            <Button variant="outline" size="md">
-              <Filter className="w-4 h-4" /> Filter
-            </Button>
-          </div>
 
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filtered.map((company) => (
-              <div
-                key={company.id}
-                className="bg-white rounded-2xl border border-slate-100 card-shadow p-5"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-                      style={{ backgroundColor: company.color }}
-                    >
-                      {company.logo}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-slate-900 text-sm">{company.name}</p>
-                      <p className="text-xs text-slate-500">{company.industry}</p>
-                    </div>
-                  </div>
-                  <StatusBadge status={company.status} />
-                </div>
-
-                <div className="space-y-1.5 mb-4">
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <MapPin className="w-3.5 h-3.5" /> {company.location}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <Building2 className="w-3.5 h-3.5" /> {company.size} employees
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <Briefcase className="w-3.5 h-3.5" /> {company.openJobs} open positions
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {company.verified ? (
-                    <Badge variant="success" className="text-xs">
-                      <CheckCircle className="w-3 h-3 mr-1" /> Verified
-                    </Badge>
-                  ) : (
-                    <Badge variant="warning" className="text-xs">Unverified</Badge>
-                  )}
-                </div>
-
-                <div className="flex gap-2 mt-4 pt-4 border-t border-slate-50">
-                  <Button variant="outline" size="sm" className="flex-1 text-xs">
-                    <Eye className="w-3 h-3" /> View
-                  </Button>
-                  {company.status === "pending" ? (
-                    <Button
-                      size="sm"
-                      className="flex-1 text-xs bg-emerald-600 hover:bg-emerald-700"
-                      onClick={() => handleApprove(company.id)}
-                    >
-                      <CheckCircle className="w-3 h-3" /> Approve
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      className="flex-1 text-xs"
-                      onClick={() => handleSuspend(company.id)}
-                    >
-                      <Ban className="w-3 h-3" />
-                      {company.status === "suspended" ? "Unsuspend" : "Suspend"}
-                    </Button>
-                  )}
-                </div>
+            {loading ? (
+              <div className="p-6 space-y-3">
+                {[1,2,3].map(i => <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse" />)}
               </div>
-            ))}
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-16">
+                <Building2 className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                <p className="text-slate-500 font-medium">No companies yet</p>
+                <p className="text-sm text-slate-400 mt-1">Companies will appear here once they register</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="text-left text-xs text-slate-400 p-4 font-medium">Company</th>
+                      <th className="text-left text-xs text-slate-400 p-4 font-medium hidden md:table-cell">Industry</th>
+                      <th className="text-left text-xs text-slate-400 p-4 font-medium hidden lg:table-cell">HR Email</th>
+                      <th className="text-left text-xs text-slate-400 p-4 font-medium">Status</th>
+                      <th className="text-left text-xs text-slate-400 p-4 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {filtered.map((c: any) => (
+                      <tr key={c.id} className="hover:bg-slate-50/50">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                              style={{ backgroundColor: c.logoColor ?? "#4f46e5" }}
+                            >
+                              {c.logoText ?? c.name?.[0]}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">{c.name}</p>
+                              <p className="text-xs text-slate-400">{c.hrName}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 hidden md:table-cell">
+                          <span className="text-xs text-slate-500">{c.industry ?? "—"}</span>
+                        </td>
+                        <td className="p-4 hidden lg:table-cell">
+                          <span className="text-xs text-slate-500">{c.user?.email}</span>
+                        </td>
+                        <td className="p-4">
+                          <Badge
+                            variant={c.status === "APPROVED" ? "success" : c.status === "PENDING" ? "warning" : "danger"}
+                            className="text-xs"
+                          >
+                            {c.status}
+                          </Badge>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-1">
+                            {c.status !== "APPROVED" && (
+                              <button onClick={() => updateStatus(c.id, "APPROVED")}
+                                className="flex items-center gap-1 text-xs px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors">
+                                <CheckCircle className="w-3.5 h-3.5" /> Approve
+                              </button>
+                            )}
+                            {c.status !== "SUSPENDED" && (
+                              <button onClick={() => updateStatus(c.id, "SUSPENDED")}
+                                className="flex items-center gap-1 text-xs px-2 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                                <Ban className="w-3.5 h-3.5" /> Suspend
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </main>
       </div>

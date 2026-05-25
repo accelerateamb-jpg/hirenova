@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { JobCard } from "@/components/ui/JobCard";
-import { mockJobs, mockCompanies, mockTestimonials } from "@/data/mock";
+import { mockTestimonials } from "@/data/mock";
 import {
   Search,
   MapPin,
@@ -69,6 +68,13 @@ const howItWorksSteps = [
 export default function LandingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLocation, setSearchLocation] = useState("");
+  const [featuredJobs, setFeaturedJobs] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/jobs?limit=6").then((r) => r.json()).then((d) => setFeaturedJobs(d.jobs ?? []));
+    fetch("/api/companies").then((r) => r.json()).then((d) => setCompanies(d.companies ?? []));
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -203,8 +209,33 @@ export default function LandingPage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {mockJobs.slice(0, 6).map((job) => (
-              <JobCard key={job.id} job={job} />
+            {featuredJobs.length === 0 ? (
+              <div className="col-span-3 text-center py-16 text-slate-400">
+                <Briefcase className="w-10 h-10 mx-auto mb-3 text-slate-200" />
+                <p>No jobs posted yet. Check back soon.</p>
+              </div>
+            ) : featuredJobs.map((job: any) => (
+              <Link href="/jobs" key={job.id} className="bg-white rounded-2xl border border-slate-100 card-shadow card-shadow-hover p-5 flex flex-col gap-3 hover:border-indigo-100 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                    style={{ backgroundColor: job.company?.logoColor ?? "#4f46e5" }}>
+                    {job.company?.logoText ?? job.company?.name?.[0]}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900 text-sm">{job.title}</p>
+                    <p className="text-xs text-slate-500">{job.company?.name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.location}</span>
+                  {job.isRemote && <Badge variant="success" className="text-xs">Remote</Badge>}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {job.skills?.slice(0, 3).map((s: any) => (
+                    <span key={s.id} className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-medium">{s.skill}</span>
+                  ))}
+                </div>
+              </Link>
             ))}
           </div>
           <div className="text-center mt-10">
@@ -232,23 +263,22 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {mockCompanies.map((company) => (
-              <div
-                key={company.id}
-                className="group bg-white rounded-2xl border border-slate-100 card-shadow card-shadow-hover p-5 flex flex-col items-center gap-3 transition-all duration-300 cursor-pointer"
-              >
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-                  style={{ backgroundColor: company.color }}
-                >
-                  {company.logo}
+            {companies.length === 0 ? (
+              <div className="col-span-6 text-center py-10 text-slate-400">
+                <Building2 className="w-10 h-10 mx-auto mb-3 text-slate-200" />
+                <p>No companies listed yet.</p>
+              </div>
+            ) : companies.map((company: any) => (
+              <div key={company.id}
+                className="group bg-white rounded-2xl border border-slate-100 card-shadow card-shadow-hover p-5 flex flex-col items-center gap-3 transition-all duration-300 cursor-pointer">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm"
+                  style={{ backgroundColor: company.logoColor ?? "#4f46e5" }}>
+                  {company.logoText ?? company.name?.[0]}
                 </div>
                 <div className="text-center">
-                  <p className="text-xs font-semibold text-slate-800 leading-snug">
-                    {company.name}
-                  </p>
+                  <p className="text-xs font-semibold text-slate-800 leading-snug">{company.name}</p>
                   <p className="text-xs text-emerald-600 font-medium mt-1">
-                    {company.openJobs} open roles
+                    {company._count?.jobs ?? 0} open roles
                   </p>
                 </div>
               </div>
