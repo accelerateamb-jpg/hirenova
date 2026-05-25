@@ -49,7 +49,7 @@ export default function Navbar({
           {variant === "landing" && (
             <nav className="hidden md:flex items-center gap-1">
               <Link
-                href="/candidate/jobs"
+                href="/jobs"
                 className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
               >
                 Find Jobs
@@ -122,7 +122,7 @@ export default function Navbar({
       {mobileOpen && variant === "landing" && (
         <div className="md:hidden border-t border-slate-100 bg-white px-4 py-4 flex flex-col gap-2">
           <Link
-            href="/candidate/jobs"
+            href="/jobs"
             className="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-xl"
           >
             Find Jobs

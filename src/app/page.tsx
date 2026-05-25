@@ -125,7 +125,7 @@ export default function LandingPage() {
                   className="w-40 text-sm text-slate-700 placeholder:text-slate-400 outline-none bg-transparent"
                 />
               </div>
-              <Link href="/candidate/jobs">
+              <Link href="/jobs">
                 <Button size="lg" className="w-full sm:w-auto px-8 rounded-xl">
                   Search Jobs
                 </Button>
@@ -196,7 +196,7 @@ export default function LandingPage() {
                 Hand-picked roles from India&apos;s top companies
               </p>
             </div>
-            <Link href="/candidate/jobs">
+            <Link href="/jobs">
               <Button variant="outline" size="sm" className="hidden sm:flex">
                 View All Jobs <ChevronRight className="w-4 h-4" />
               </Button>
@@ -208,7 +208,7 @@ export default function LandingPage() {
             ))}
           </div>
           <div className="text-center mt-10">
-            <Link href="/candidate/jobs">
+            <Link href="/jobs">
               <Button size="lg">
                 Explore All Jobs <ArrowRight className="w-4 h-4" />
               </Button>

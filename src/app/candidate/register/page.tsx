@@ -1,22 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import {
-  Briefcase,
-  Eye,
-  EyeOff,
-  CheckCircle,
-  Shield,
-  Smartphone,
-  Mail,
-  User,
-  Lock,
-  CreditCard,
-  ArrowRight,
+  Briefcase, Eye, EyeOff, CheckCircle, Shield,
+  Smartphone, Mail, User, Lock, CreditCard, ArrowRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -31,16 +22,110 @@ export default function CandidateRegisterPage() {
   const [step, setStep] = useState(1);
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    mobile: "",
-    password: "",
-  });
-  const [otp, setOtp] = useState("");
+  const [error, setError] = useState("");
+  const [otpValues, setOtpValues] = useState(["", "", "", "", "", ""]);
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handleNext = () => {
-    if (step < 3) setStep(step + 1);
+  const [form, setForm] = useState({ name: "", email: "", mobile: "", password: "" });
+
+  const handleSendOtp = async () => {
+    setError("");
+    if (!form.name || !form.email || !form.password) {
+      setError("Name, email and password are required");
+      return;
+    }
+    if (form.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, type: "CANDIDATE" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setStep(2);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const updated = [...otpValues];
+    updated[index] = value.slice(-1);
+    setOtpValues(updated);
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !otpValues[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pasted.length === 6) {
+      setOtpValues(pasted.split(""));
+      otpRefs.current[5]?.focus();
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const code = otpValues.join("");
+    if (code.length < 6) { setError("Enter all 6 digits"); return; }
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, code, type: "CANDIDATE" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Create account after OTP verified
+      const regRes = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const regData = await regRes.json();
+      if (!regRes.ok) throw new Error(regData.error);
+
+      setStep(3);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError("");
+    setOtpValues(["", "", "", "", "", ""]);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, type: "CANDIDATE" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePayment = () => {
@@ -67,12 +152,10 @@ export default function CandidateRegisterPage() {
         </div>
         <div className="relative">
           <h2 className="text-3xl font-bold text-white mb-4 leading-tight">
-            Your Dream Job
-            <br />
-            Is One Click Away
+            Your Dream Job<br />Is One Click Away
           </h2>
           <p className="text-indigo-200 text-sm leading-relaxed mb-8">
-            Join 12,000+ candidates who landed their perfect role using HireNova. Create your profile and start applying instantly.
+            Join 12,000+ candidates who landed their perfect role using HireNova.
           </p>
           <div className="space-y-3">
             {[
@@ -89,16 +172,13 @@ export default function CandidateRegisterPage() {
           </div>
         </div>
         <div className="relative">
-          <p className="text-indigo-300/60 text-xs">
-            © 2026 HireNova. All rights reserved.
-          </p>
+          <p className="text-indigo-300/60 text-xs">© 2026 HireNova. All rights reserved.</p>
         </div>
       </div>
 
       {/* Right Panel */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-md">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-6 lg:hidden">
               <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
@@ -108,12 +188,12 @@ export default function CandidateRegisterPage() {
             </div>
             <h1 className="text-2xl font-bold text-slate-900">
               {step === 1 && "Create your account"}
-              {step === 2 && "Verify your identity"}
+              {step === 2 && "Verify your email"}
               {step === 3 && "Complete registration"}
             </h1>
             <p className="text-sm text-slate-500 mt-1">
               {step === 1 && "Start your journey to your dream job"}
-              {step === 2 && "We've sent a code to your mobile & email"}
+              {step === 2 && `We sent a 6-digit code to ${form.email}`}
               {step === 3 && "One-time registration fee of ₹100"}
             </p>
           </div>
@@ -123,87 +203,47 @@ export default function CandidateRegisterPage() {
             {steps.map((s, i) => (
               <div key={s.id} className="flex items-center gap-2 flex-1">
                 <div className="flex items-center gap-2">
-                  <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      step > s.id
-                        ? "bg-emerald-500 text-white"
-                        : step === s.id
-                        ? "bg-indigo-600 text-white"
-                        : "bg-slate-200 text-slate-400"
-                    }`}
-                  >
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                    step > s.id ? "bg-emerald-500 text-white" : step === s.id ? "bg-indigo-600 text-white" : "bg-slate-200 text-slate-400"
+                  }`}>
                     {step > s.id ? <CheckCircle className="w-4 h-4" /> : s.id}
                   </div>
-                  <span
-                    className={`text-xs font-medium ${
-                      step >= s.id ? "text-slate-700" : "text-slate-400"
-                    }`}
-                  >
+                  <span className={`text-xs font-medium ${step >= s.id ? "text-slate-700" : "text-slate-400"}`}>
                     {s.label}
                   </span>
                 </div>
                 {i < steps.length - 1 && (
-                  <div
-                    className={`flex-1 h-px mx-1 ${
-                      step > s.id ? "bg-emerald-400" : "bg-slate-200"
-                    }`}
-                  />
+                  <div className={`flex-1 h-px mx-1 ${step > s.id ? "bg-emerald-400" : "bg-slate-200"}`} />
                 )}
               </div>
             ))}
           </div>
 
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-100 text-red-700 text-sm rounded-xl px-4 py-3">
+              {error}
+            </div>
+          )}
+
           {/* Step 1: Account */}
           {step === 1 && (
             <div className="space-y-4">
-              <Input
-                label="Full Name"
-                placeholder="Arjun Kumar"
-                leftIcon={<User className="w-4 h-4" />}
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-              <Input
-                label="Email Address"
-                type="email"
-                placeholder="arjun@example.com"
-                leftIcon={<Mail className="w-4 h-4" />}
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-              <Input
-                label="Mobile Number"
-                type="tel"
-                placeholder="+91 98765 43210"
-                leftIcon={<Smartphone className="w-4 h-4" />}
-                value={form.mobile}
-                onChange={(e) => setForm({ ...form, mobile: e.target.value })}
-              />
-              <Input
-                label="Password"
-                type={showPass ? "text" : "password"}
-                placeholder="Min. 8 characters"
+              <Input label="Full Name" placeholder="Arjun Kumar" leftIcon={<User className="w-4 h-4" />}
+                value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <Input label="Email Address" type="email" placeholder="arjun@example.com" leftIcon={<Mail className="w-4 h-4" />}
+                value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <Input label="Mobile Number" type="tel" placeholder="+91 98765 43210" leftIcon={<Smartphone className="w-4 h-4" />}
+                value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
+              <Input label="Password" type={showPass ? "text" : "password"} placeholder="Min. 8 characters"
                 leftIcon={<Lock className="w-4 h-4" />}
-                rightIcon={
-                  <button onClick={() => setShowPass(!showPass)}>
-                    {showPass ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                }
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-              />
-              <Button fullWidth size="lg" onClick={handleNext} className="mt-2">
-                Continue <ArrowRight className="w-4 h-4" />
+                rightIcon={<button onClick={() => setShowPass(!showPass)}>{showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>}
+                value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+              <Button fullWidth size="lg" loading={loading} onClick={handleSendOtp} className="mt-2">
+                Send OTP <ArrowRight className="w-4 h-4" />
               </Button>
               <p className="text-center text-sm text-slate-500">
                 Already have an account?{" "}
-                <Link href="/candidate/login" className="text-indigo-600 font-medium hover:underline">
-                  Sign in
-                </Link>
+                <Link href="/candidate/login" className="text-indigo-600 font-medium hover:underline">Sign in</Link>
               </p>
             </div>
           )}
@@ -214,22 +254,25 @@ export default function CandidateRegisterPage() {
               <div className="bg-indigo-50 rounded-2xl p-4 flex items-start gap-3">
                 <Shield className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-indigo-900">Verification Required</p>
+                  <p className="text-sm font-medium text-indigo-900">Check your inbox</p>
                   <p className="text-xs text-indigo-600 mt-0.5">
-                    Enter the OTP sent to +91 98765 43210 and {form.email || "your email"}
+                    A verification code was sent to <strong>{form.email}</strong>
                   </p>
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">
-                  Enter 6-digit OTP
-                </label>
-                <div className="flex gap-2">
-                  {Array.from({ length: 6 }).map((_, i) => (
+                <label className="text-sm font-medium text-slate-700 mb-2 block">Enter 6-digit OTP</label>
+                <div className="flex gap-2" onPaste={handleOtpPaste}>
+                  {otpValues.map((val, i) => (
                     <input
                       key={i}
+                      ref={(el) => { otpRefs.current[i] = el; }}
                       type="text"
+                      inputMode="numeric"
                       maxLength={1}
+                      value={val}
+                      onChange={(e) => handleOtpChange(i, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(i, e)}
                       className="w-full aspect-square text-center text-lg font-bold border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
                     />
                   ))}
@@ -237,14 +280,18 @@ export default function CandidateRegisterPage() {
               </div>
               <p className="text-xs text-slate-500">
                 Didn&apos;t receive?{" "}
-                <button className="text-indigo-600 font-medium hover:underline">
+                <button onClick={handleResendOtp} disabled={loading} className="text-indigo-600 font-medium hover:underline disabled:opacity-50">
                   Resend OTP
                 </button>
                 {" "}(valid for 10 mins)
               </p>
-              <Button fullWidth size="lg" onClick={handleNext}>
+              <Button fullWidth size="lg" loading={loading} onClick={handleVerifyOtp}>
                 Verify & Continue <ArrowRight className="w-4 h-4" />
               </Button>
+              <button onClick={() => { setStep(1); setError(""); setOtpValues(["","","","","",""]); }}
+                className="w-full text-xs text-slate-400 hover:text-slate-600 text-center">
+                ← Back to edit email
+              </button>
             </div>
           )}
 
@@ -265,34 +312,23 @@ export default function CandidateRegisterPage() {
                   <span className="text-sm font-bold text-indigo-600">₹100.00</span>
                 </div>
               </div>
-
               <div className="grid grid-cols-3 gap-3">
                 {["Razorpay", "PhonePe", "Stripe"].map((method) => (
-                  <button
-                    key={method}
-                    className="border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 transition-all"
-                  >
+                  <button key={method} className="border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 transition-all">
                     {method}
                   </button>
                 ))}
               </div>
-
               <div className="space-y-3">
-                <Input
-                  label="Card Number"
-                  placeholder="4242 4242 4242 4242"
-                  leftIcon={<CreditCard className="w-4 h-4" />}
-                />
+                <Input label="Card Number" placeholder="4242 4242 4242 4242" leftIcon={<CreditCard className="w-4 h-4" />} />
                 <div className="grid grid-cols-2 gap-3">
                   <Input placeholder="MM / YY" label="Expiry" />
                   <Input placeholder="CVV" label="CVV" type="password" />
                 </div>
               </div>
-
               <Button fullWidth size="lg" loading={loading} onClick={handlePayment}>
                 Pay ₹100 & Activate Account
               </Button>
-
               <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
                 <Shield className="w-3.5 h-3.5" />
                 <span>256-bit SSL encryption. Your payment is secure.</span>
