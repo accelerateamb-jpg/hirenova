@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/Badge";
 import {
   Briefcase, Eye, EyeOff, CheckCircle, Shield,
   Smartphone, Mail, User, Lock, CreditCard, ArrowRight,
+  Upload, FileText, X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 const steps = [
   { id: 1, label: "Account" },
@@ -27,6 +29,41 @@ export default function CandidateRegisterPage() {
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const [form, setForm] = useState({ name: "", email: "", mobile: "", password: "" });
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [cvUploading, setCvUploading] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCvChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = ["application/pdf", "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!allowed.includes(file.type)) {
+      setError("Only PDF and Word documents allowed");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File must be under 5 MB");
+      return;
+    }
+    setError("");
+    setCvFile(file);
+    setCvUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setResumeUrl(data.url);
+    } catch (err: any) {
+      setError(err.message ?? "CV upload failed");
+      setCvFile(null);
+    } finally {
+      setCvUploading(false);
+    }
+  };
 
   const handleSendOtp = async () => {
     setError("");
@@ -36,6 +73,18 @@ export default function CandidateRegisterPage() {
     }
     if (form.password.length < 8) {
       setError("Password must be at least 8 characters");
+      return;
+    }
+    if (!cvFile) {
+      setError("Please upload your resume before continuing");
+      return;
+    }
+    if (cvUploading) {
+      setError("Please wait for your resume to finish uploading");
+      return;
+    }
+    if (!resumeUrl) {
+      setError("Resume upload failed. Please try again");
       return;
     }
     setLoading(true);
@@ -96,10 +145,17 @@ export default function CandidateRegisterPage() {
       const regRes = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, resumeUrl }),
       });
       const regData = await regRes.json();
       if (!regRes.ok) throw new Error(regData.error);
+
+      // Auto-signin so session is available immediately
+      await signIn("credentials", {
+        redirect: false,
+        email: form.email,
+        password: form.password,
+      });
 
       setStep(3);
     } catch (err: any) {
@@ -238,7 +294,45 @@ export default function CandidateRegisterPage() {
                 leftIcon={<Lock className="w-4 h-4" />}
                 rightIcon={<button onClick={() => setShowPass(!showPass)}>{showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>}
                 value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-              <Button fullWidth size="lg" loading={loading} onClick={handleSendOtp} className="mt-2">
+
+              {/* CV Upload */}
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">
+                  Resume / CV <span className="text-red-500">*</span>
+                </label>
+                {cvFile ? (
+                  <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2.5">
+                    <FileText className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                    <span className="text-xs text-indigo-700 flex-1 truncate">{cvFile.name}</span>
+                    {cvUploading ? (
+                      <span className="text-xs text-indigo-400">Uploading…</span>
+                    ) : (
+                      <button onClick={() => { setCvFile(null); setResumeUrl(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                        className="text-indigo-400 hover:text-indigo-600">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full border-2 border-dashed border-slate-200 rounded-xl px-4 py-3 flex items-center gap-3 text-sm text-slate-500 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+                  >
+                    <Upload className="w-4 h-4 text-slate-400" />
+                    <span>Upload PDF or Word doc (max 5 MB)</span>
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={handleCvChange}
+                />
+              </div>
+
+              <Button fullWidth size="lg" loading={loading || cvUploading} onClick={handleSendOtp} className="mt-2">
                 Send OTP <ArrowRight className="w-4 h-4" />
               </Button>
               <p className="text-center text-sm text-slate-500">

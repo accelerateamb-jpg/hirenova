@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, mobile, password, role = "CANDIDATE" } = body;
+    const { name, email, mobile, password, resumeUrl, role = "CANDIDATE" } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
             create: {
               paymentStatus: "pending",
               profileCompletion: 20,
+              resumeUrl: resumeUrl ?? null,
             },
           },
         }),

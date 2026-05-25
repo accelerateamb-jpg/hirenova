@@ -31,16 +31,16 @@ const candidateLinks: SidebarItem[] = [
   { label: "Dashboard", href: "/candidate/dashboard", icon: <LayoutDashboard className="w-4.5 h-4.5" /> },
   { label: "My Profile", href: "/candidate/profile", icon: <User className="w-4.5 h-4.5" /> },
   { label: "Browse Jobs", href: "/candidate/jobs", icon: <Search className="w-4.5 h-4.5" /> },
-  { label: "Applications", href: "/candidate/applications", icon: <FileText className="w-4.5 h-4.5" />, badge: 3 },
+  { label: "Applications", href: "/candidate/applications", icon: <FileText className="w-4.5 h-4.5" /> },
   { label: "Saved Jobs", href: "/candidate/saved", icon: <Briefcase className="w-4.5 h-4.5" /> },
-  { label: "Notifications", href: "/candidate/notifications", icon: <Bell className="w-4.5 h-4.5" />, badge: 2 },
+  { label: "Notifications", href: "/candidate/notifications", icon: <Bell className="w-4.5 h-4.5" /> },
 ];
 
 const companyLinks: SidebarItem[] = [
   { label: "Dashboard", href: "/company/dashboard", icon: <LayoutDashboard className="w-4.5 h-4.5" /> },
   { label: "Post a Job", href: "/company/post-job", icon: <PlusCircle className="w-4.5 h-4.5" /> },
   { label: "Active Jobs", href: "/company/jobs", icon: <Briefcase className="w-4.5 h-4.5" /> },
-  { label: "Applicants", href: "/company/applicants", icon: <Users className="w-4.5 h-4.5" />, badge: 8 },
+  { label: "Applicants", href: "/company/applicants", icon: <Users className="w-4.5 h-4.5" /> },
   { label: "Analytics", href: "/company/analytics", icon: <BarChart3 className="w-4.5 h-4.5" /> },
   { label: "Settings", href: "/company/settings", icon: <Settings className="w-4.5 h-4.5" /> },
 ];

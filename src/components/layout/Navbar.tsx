@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { useSession } from "next-auth/react";
 import {
   Briefcase,
   Menu,
   X,
   ChevronDown,
   Bell,
-  Search,
 } from "lucide-react";
 
 interface NavbarProps {
@@ -23,6 +23,8 @@ export default function Navbar({
   candidateName,
 }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: session } = useSession();
+  const displayName = candidateName || (session?.user as any)?.name || "User";
 
   return (
     <header
@@ -89,19 +91,20 @@ export default function Navbar({
               <div className="flex items-center gap-3">
                 <button className="relative p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors">
                   <Bell className="w-5 h-5" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full" />
                 </button>
                 <div className="flex items-center gap-2.5 cursor-pointer group">
                   <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
                     <span className="text-xs font-bold text-white">
-                      {candidateName?.[0] ?? "U"}
+                      {displayName[0]?.toUpperCase()}
                     </span>
                   </div>
                   <div className="hidden sm:block">
                     <p className="text-sm font-semibold text-slate-900 leading-none">
-                      {candidateName ?? "User"}
+                      {displayName}
                     </p>
-                    <p className="text-xs text-slate-500 capitalize">{variant}</p>
+                    <p className="text-xs text-slate-500 capitalize">
+                      {variant === "candidate" ? "Job Seeker" : variant === "company" ? "Recruiter" : variant}
+                    </p>
                   </div>
                 </div>
               </div>
