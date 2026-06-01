@@ -123,6 +123,36 @@ async function main() {
   });
 
   await prisma.job.upsert({
+    where: { id: "seed-job-004" },
+    update: {},
+    create: {
+      id: "seed-job-004",
+      companyId: company.id,
+      title: "Sales Executive (Walk-in)",
+      description:
+        "We are hiring dynamic Sales Executives for our enterprise sales team. This is a walk-in role — no CV upload required. Simply drop us an email and our HR team will reach out to schedule an interview.\n\nResponsibilities:\n- Generate leads and close enterprise deals\n- Manage client relationships and renewals\n- Hit monthly and quarterly revenue targets\n\nRequirements:\n- 1–3 years of B2B sales experience\n- Excellent communication skills\n- Willingness to travel within the city",
+      location: "Mumbai, Maharashtra",
+      isRemote: false,
+      type: "Full-time",
+      experience: "1-3 years",
+      salaryMin: 400000,
+      salaryMax: 700000,
+      category: "Sales",
+      contactEmail: "walkin@techcorp.in",
+      requiresResume: false,
+      deadline: new Date("2026-07-01"),
+      status: "ACTIVE",
+      skills: {
+        create: [
+          { skill: "Sales" },
+          { skill: "CRM" },
+          { skill: "Communication" },
+        ],
+      },
+    },
+  });
+
+  await prisma.job.upsert({
     where: { id: "seed-job-003" },
     update: {},
     create: {
