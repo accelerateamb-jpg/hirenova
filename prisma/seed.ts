@@ -153,6 +153,20 @@ async function main() {
     },
   });
 
+  // ─── Test Staff ─────────────────────────────────────────────────────────
+  const staffPassword = await bcrypt.hash("Staff@2026", 12);
+  await prisma.user.upsert({
+    where: { email: "staff@hirenova.com" },
+    update: {},
+    create: {
+      email: "staff@hirenova.com",
+      password: staffPassword,
+      name: "Karan Nair",
+      mobile: "+91 98765 33333",
+      role: "STAFF",
+    },
+  });
+
   // ─── Test Candidate ──────────────────────────────────────────────────────
   const candidatePassword = await bcrypt.hash("Candidate@2026", 12);
   const candidateUser = await prisma.user.upsert({
@@ -247,6 +261,11 @@ async function main() {
   console.log("│  Email:    company@hirenova.com                     │");
   console.log("│  Password: Company@2026                             │");
   console.log("│  URL:      /company/login                           │");
+  console.log("├─────────────────────────────────────────────────────┤");
+  console.log("│  STAFF                                              │");
+  console.log("│  Email:    staff@hirenova.com                       │");
+  console.log("│  Password: Staff@2026                               │");
+  console.log("│  URL:      /staff/login                             │");
   console.log("└─────────────────────────────────────────────────────┘");
 }
 
