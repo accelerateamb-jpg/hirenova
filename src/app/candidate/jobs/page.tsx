@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import { Badge } from "@/components/ui/Badge";
@@ -10,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { formatSalaryRange } from "@/lib/utils";
 import {
   Search, MapPin, SlidersHorizontal, Briefcase,
-  Wifi, X, CheckCircle, IndianRupee, Clock,
+  Wifi, X, CheckCircle, IndianRupee, Clock, Mail,
 } from "lucide-react";
 
 const categories = ["All", "Engineering", "Product", "Design", "Data", "Marketing"];
@@ -18,7 +17,6 @@ const locations = ["All", "Bangalore", "Mumbai", "Hyderabad", "Pune", "Chennai",
 
 export default function CandidateJobsPage() {
   const { data: session } = useSession();
-  const router = useRouter();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -173,8 +171,23 @@ export default function CandidateJobsPage() {
                       ))}
                     </div>
                     <div className="pt-1 border-t border-slate-50">
-                      <Button fullWidth size="sm" variant="primary" loading={applying === job.id}
-                        onClick={() => handleApply(job.id)}>Apply Now</Button>
+                      {job.requiresResume === false ? (
+                        <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 flex items-start gap-2">
+                          <Mail className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-amber-800">No CV required — apply via email</p>
+                            <a
+                              href={`mailto:${job.contactEmail}?subject=Application for ${encodeURIComponent(job.title)}`}
+                              className="text-xs text-amber-700 font-semibold hover:underline truncate block"
+                            >
+                              {job.contactEmail}
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button fullWidth size="sm" variant="primary" loading={applying === job.id}
+                          onClick={() => handleApply(job.id)}>Apply Now</Button>
+                      )}
                     </div>
                   </div>
                 );

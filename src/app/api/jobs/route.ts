@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { CompanyStatus, JobStatus, UserRole } from "@/generated/prisma/enums";
+import { CompanyStatus, JobStatus } from "@/generated/prisma/enums";
 
 export async function GET(req: NextRequest) {
   try {
@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
     const {
       title, description, location, isRemote, type, experience,
       salaryMin, salaryMax, category, contactEmail, deadline, skills,
+      requiresResume,
     } = body;
 
     const job = await prisma.job.create({
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
         category,
         contactEmail,
         deadline: deadline ? new Date(deadline) : null,
+        requiresResume: requiresResume !== false,
         skills: {
           create: (skills ?? []).map((s: string) => ({ skill: s })),
         },

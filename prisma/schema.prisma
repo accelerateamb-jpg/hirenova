@@ -146,6 +146,7 @@ model Job {
   contactEmail String?
   deadline     DateTime?
   status       JobStatus   @default(ACTIVE)
+  requiresResume Boolean     @default(true)
   isFlagged    Boolean     @default(false)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt

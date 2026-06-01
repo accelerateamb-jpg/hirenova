@@ -13,10 +13,10 @@ import {
   Briefcase,
   Wifi,
   X,
-  Building2,
   Clock,
   IndianRupee,
   ArrowRight,
+  Mail,
 } from "lucide-react";
 
 const categories = ["All", "Engineering", "Product", "Design", "Data", "Marketing"];
@@ -219,13 +219,30 @@ export default function PublicJobsPage() {
                 </div>
 
                 {/* Apply CTA */}
-                <div className="pt-1 border-t border-slate-50 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">{job._count?.applications ?? 0} applicants</span>
-                  <Link href="/candidate/register">
-                    <Button size="sm" variant="primary" className="flex items-center gap-1.5">
-                      Apply Now <ArrowRight className="w-3.5 h-3.5" />
-                    </Button>
-                  </Link>
+                <div className="pt-1 border-t border-slate-50">
+                  {job.requiresResume === false ? (
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 flex items-start gap-2">
+                      <Mail className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-amber-800">No CV required — apply via email</p>
+                        <a
+                          href={`mailto:${job.contactEmail}?subject=Application for ${encodeURIComponent(job.title)}`}
+                          className="text-xs text-amber-700 font-semibold hover:underline truncate block"
+                        >
+                          {job.contactEmail}
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-400">{job._count?.applications ?? 0} applicants</span>
+                      <Link href="/candidate/register">
+                        <Button size="sm" variant="primary" className="flex items-center gap-1.5">
+                          Apply Now <ArrowRight className="w-3.5 h-3.5" />
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
