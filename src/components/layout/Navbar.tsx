@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 interface NavbarProps {
-  variant?: "landing" | "candidate" | "company" | "admin";
+  variant?: "landing" | "candidate" | "company" | "admin" | "staff";
   candidateName?: string;
 }
 
@@ -87,7 +87,7 @@ export default function Navbar({
               </>
             )}
 
-            {(variant === "candidate" || variant === "company" || variant === "admin") && (
+            {(variant === "candidate" || variant === "company" || variant === "admin" || variant === "staff") && (
               <div className="flex items-center gap-3">
                 <button className="relative p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors">
                   <Bell className="w-5 h-5" />
@@ -103,7 +103,7 @@ export default function Navbar({
                       {displayName}
                     </p>
                     <p className="text-xs text-slate-500 capitalize">
-                      {variant === "candidate" ? "Job Seeker" : variant === "company" ? "Recruiter" : variant}
+                      {variant === "candidate" ? "Job Seeker" : variant === "company" ? "Recruiter" : variant === "staff" ? "Staff" : variant}
                     </p>
                   </div>
                 </div>

@@ -51,12 +51,19 @@ const adminLinks: SidebarItem[] = [
   { label: "Companies", href: "/admin/companies", icon: <Building2 className="w-4.5 h-4.5" /> },
   { label: "Jobs", href: "/admin/jobs", icon: <Briefcase className="w-4.5 h-4.5" /> },
   { label: "Payments", href: "/admin/payments", icon: <CreditCard className="w-4.5 h-4.5" /> },
-  { label: "Moderation", href: "/admin/moderation", icon: <ShieldCheck className="w-4.5 h-4.5" /> },
+  { label: "Staff", href: "/admin/staff", icon: <ShieldCheck className="w-4.5 h-4.5" /> },
   { label: "Settings", href: "/admin/settings", icon: <Settings className="w-4.5 h-4.5" /> },
 ];
 
+const staffLinks: SidebarItem[] = [
+  { label: "Dashboard", href: "/staff/dashboard", icon: <LayoutDashboard className="w-4.5 h-4.5" /> },
+  { label: "Organisations", href: "/staff/organisations", icon: <Building2 className="w-4.5 h-4.5" /> },
+  { label: "Post a Job", href: "/staff/jobs/new", icon: <PlusCircle className="w-4.5 h-4.5" /> },
+  { label: "My Jobs", href: "/staff/jobs", icon: <Briefcase className="w-4.5 h-4.5" /> },
+];
+
 interface SidebarProps {
-  variant: "candidate" | "company" | "admin";
+  variant: "candidate" | "company" | "admin" | "staff";
   userName?: string;
   userRole?: string;
 }
@@ -65,18 +72,16 @@ export default function Sidebar({ variant, userName, userRole }: SidebarProps) {
   const pathname = usePathname();
 
   const links =
-    variant === "candidate"
-      ? candidateLinks
-      : variant === "company"
-      ? companyLinks
-      : adminLinks;
+    variant === "candidate" ? candidateLinks
+    : variant === "company" ? companyLinks
+    : variant === "staff" ? staffLinks
+    : adminLinks;
 
   const avatarColor =
-    variant === "candidate"
-      ? "bg-indigo-600"
-      : variant === "company"
-      ? "bg-blue-600"
-      : "bg-slate-800";
+    variant === "candidate" ? "bg-indigo-600"
+    : variant === "company" ? "bg-blue-600"
+    : variant === "staff" ? "bg-emerald-600"
+    : "bg-slate-800";
 
   return (
     <aside className="w-64 min-h-screen bg-white border-r border-slate-100 flex flex-col sticky top-0">

@@ -11,6 +11,7 @@ enum UserRole {
   CANDIDATE
   COMPANY
   ADMIN
+  STAFF
 }
 
 enum ApplicationStatus {
@@ -54,6 +55,8 @@ model User {
   candidate         Candidate?
   company           Company?
   sessions          Session[]
+  staffCompanies    Company[]  @relation("StaffAddedCompanies")
+  staffJobs         Job[]      @relation("StaffPostedJobs")
 
   @@map("users")
 }
@@ -125,6 +128,9 @@ model Company {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
+  addedByStaffId String?
+  addedByStaff   User?         @relation("StaffAddedCompanies", fields: [addedByStaffId], references: [id])
+
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   jobs        Job[]
 
@@ -150,6 +156,9 @@ model Job {
   isFlagged    Boolean     @default(false)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+
+  postedByStaffId String?
+  postedByStaff   User?    @relation("StaffPostedJobs", fields: [postedByStaffId], references: [id])
 
   company      Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   skills       JobSkill[]
