@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import {
   Users, Building2, Briefcase, CreditCard,
-  ArrowRight, ShieldCheck, CheckCircle, Clock,
+  ArrowRight, UserCheck, Clock,
 } from "lucide-react";
+
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
@@ -46,16 +47,26 @@ export default function AdminDashboard() {
           </div>
 
           {/* Key Metrics */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <StatCard label="Total Candidates" value={loading ? "—" : (stats?.totalCandidates ?? 0).toLocaleString()}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <StatCard label="Job Seekers" value={loading ? "—" : (stats?.totalCandidates ?? 0).toLocaleString()}
               icon={<Users className="w-5 h-5" />} color="#4f46e5" />
-            <StatCard label="Companies" value={loading ? "—" : (stats?.totalCompanies ?? 0).toLocaleString()}
+            <StatCard label="Companies Generated" value={loading ? "—" : (stats?.totalCompanies ?? 0).toLocaleString()}
               icon={<Building2 className="w-5 h-5" />} color="#2563eb" />
-            <StatCard label="Active Jobs" value={loading ? "—" : (stats?.totalJobs ?? 0).toLocaleString()}
+            <StatCard label="Active Jobs" value={loading ? "—" : (stats?.totalActiveJobs ?? 0).toLocaleString()}
               icon={<Briefcase className="w-5 h-5" />} color="#7c3aed" />
             <StatCard label="Revenue Generated"
-              value={loading ? "—" : `₹${((stats?.revenueGenerated ?? 0) / 100).toFixed(0) === "0" ? "0" : ((stats?.revenueGenerated ?? 0)).toLocaleString()}`}
+              value={loading ? "—" : `₹${(stats?.revenueGenerated ?? 0).toLocaleString()}`}
               icon={<CreditCard className="w-5 h-5" />} color="#10b981" />
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard label="Total Applications" value={loading ? "—" : (stats?.totalApplications ?? 0).toLocaleString()}
+              icon={<UserCheck className="w-5 h-5" />} color="#f59e0b" />
+            <StatCard label="Staff Members" value={loading ? "—" : (stats?.totalStaff ?? 0).toLocaleString()}
+              icon={<Users className="w-5 h-5" />} color="#06b6d4" />
+            <StatCard label="Expired Jobs" value={loading ? "—" : (stats?.totalExpiredJobs ?? 0).toLocaleString()}
+              icon={<Clock className="w-5 h-5" />} color="#ef4444" />
+            <StatCard label="Today's Sign-ups" value={loading ? "—" : (stats?.dailyRegistrations ?? 0).toLocaleString()}
+              icon={<UserCheck className="w-5 h-5" />} color="#8b5cf6" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -112,19 +123,6 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              {/* Summary Cards */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded-2xl border border-slate-100 card-shadow p-5">
-                  <p className="text-xs text-slate-500 mb-1">Today&apos;s Registrations</p>
-                  <p className="text-3xl font-bold text-slate-900">{loading ? "—" : stats?.dailyRegistrations ?? 0}</p>
-                  <p className="text-xs text-slate-400 mt-1">new sign-ups today</p>
-                </div>
-                <div className="bg-white rounded-2xl border border-slate-100 card-shadow p-5">
-                  <p className="text-xs text-slate-500 mb-1">Total Applications</p>
-                  <p className="text-3xl font-bold text-slate-900">{loading ? "—" : stats?.totalApplications ?? 0}</p>
-                  <p className="text-xs text-slate-400 mt-1">across all jobs</p>
-                </div>
-              </div>
             </div>
 
             {/* Right Sidebar */}

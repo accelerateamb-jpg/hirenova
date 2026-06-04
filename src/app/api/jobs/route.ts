@@ -13,10 +13,12 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get("limit") ?? "50");
     const page = parseInt(searchParams.get("page") ?? "1");
 
+    const now = new Date();
     const where: any = {
       status: JobStatus.ACTIVE,
       isFlagged: false,
       company: { status: CompanyStatus.APPROVED },
+      OR: [{ deadline: null }, { deadline: { gte: now } }],
       ...(search && {
         OR: [
           { title: { contains: search, mode: "insensitive" } },
